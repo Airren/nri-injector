@@ -1,7 +1,7 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /workspace
-RUN apk update && apk add --no-cache make git
+RUN apk update && apk add --no-cache make
 COPY ../go.mod ../go.sum ./
 RUN go mod download
 COPY .. .

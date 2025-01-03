@@ -28,9 +28,11 @@ endif
 
 
 nri-injector:
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags "-w -s" -a -installsuffix cgo -o bin/nri-injector main.go
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags "-w -s" -a -installsuffix cgo -o bin/nri-injector  ./
 
 
 images:
-	docker build $(DOCKERARGS) -f ./build/ep-controller.Dockerfile ./ -t ${REGISTRY}/${REGISTRY_NAMESPACE}/controller:${IMAGE_TAG}
-
+	docker build $(DOCKERARGS) -f Dockerfile ./ -t ${REGISTRY}/${REGISTRY_NAMESPACE}/nri-injector:${IMAGE_TAG}
+	docker push ${REGISTRY}/${REGISTRY_NAMESPACE}/nri-injector:${IMAGE_TAG}
+	docker tag ${REGISTRY}/${REGISTRY_NAMESPACE}/nri-injector:${IMAGE_TAG} ${REGISTRY}/${REGISTRY_NAMESPACE}/nri-injector:latest
+	docker push ${REGISTRY}/${REGISTRY_NAMESPACE}/nri-injector:latest

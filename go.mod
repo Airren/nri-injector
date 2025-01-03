@@ -1,11 +1,11 @@
-module github.com/containerd/nri/plugins/logger
+module github.com/airren/nri-injector
 
-go 1.21
+go 1.23.3
 
 require (
-	github.com/containerd/nri v0.6.1
+	github.com/containerd/nri v0.8.0
 	github.com/sirupsen/logrus v1.9.3
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
@@ -20,8 +20,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731190214-cbb8c96f2d6d // indirect
 	google.golang.org/grpc v1.57.1 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cri-api v0.25.3 // indirect
 )
-
-replace github.com/containerd/nri => ../..

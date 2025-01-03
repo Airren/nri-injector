@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nri-injector
+
+
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nri-injector
+  namespace: nri-injector
+  labels:
+    k8s-app: nri-injector
+spec:
+  selector:
+    matchLabels:
+      name: nri-injector
+  template:
+    metadata:
+      labels:
+        name: nri-injector
+    spec:
+      containers:
+        - name: nri-injector
+          image: ghcr.io/airren/nri-injector
+          args:
+            - --idx=01
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: host-nri
+              mountPath: /var/run/nri
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+        - key: CriticalAddonsOnly
+          operator: Exists
+      volumes:
+        - hostPath:
+            path: /var/run/nri
+            type: DirectoryOrCreate
+          name: host-nri

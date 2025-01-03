@@ -37,6 +37,8 @@ type config struct {
 	SetAnnotation string   `json:"setAnnotation"`
 	AddEnv        string   `json:"addEnv"`
 	SetEnv        string   `json:"setEnv"`
+	Proxy         string   `json:"proxy"`
+	NoProxy       string   `json:"noProxy"`
 }
 
 type plugin struct {
@@ -80,31 +82,32 @@ func (p *plugin) Configure(_ context.Context, config, runtime, version string) (
 }
 
 func (p *plugin) Synchronize(_ context.Context, pods []*api.PodSandbox, containers []*api.Container) ([]*api.ContainerUpdate, error) {
-	dump("Synchronize", "pods", pods, "containers", containers)
+	//dump("Synchronize", "pods", pods, "containers", containers)
 	return nil, nil
 }
 
 func (p *plugin) Shutdown() {
-	dump("Shutdown")
+	//dump("Shutdown")
 }
 
 func (p *plugin) RunPodSandbox(_ context.Context, pod *api.PodSandbox) error {
-	dump("RunPodSandbox", "pod", pod)
+	//dump("RunPodSandbox", "pod", pod)
 	return nil
 }
 
 func (p *plugin) StopPodSandbox(_ context.Context, pod *api.PodSandbox) error {
-	dump("StopPodSandbox", "pod", pod)
+	//dump("StopPodSandbox", "pod", pod)
 	return nil
 }
 
 func (p *plugin) RemovePodSandbox(_ context.Context, pod *api.PodSandbox) error {
-	dump("RemovePodSandbox", "pod", pod)
+	//dump("RemovePodSandbox", "pod", pod)
 	return nil
 }
 
 func (p *plugin) CreateContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) (*api.ContainerAdjustment, []*api.ContainerUpdate, error) {
-	dump("CreateContainer", "pod", pod, "container", container)
+	//dump("CreateContainer", "pod", pod, "container", container)
+	log.Infof("CreateContainer: ", "pod/", pod, " container/", container)
 
 	adjust := &api.ContainerAdjustment{}
 
@@ -115,49 +118,52 @@ func (p *plugin) CreateContainer(_ context.Context, pod *api.PodSandbox, contain
 		adjust.RemoveAnnotation(cfg.SetAnnotation)
 		adjust.AddAnnotation(cfg.SetAnnotation, fmt.Sprintf("logger-pid-%d", os.Getpid()))
 	}
-	if cfg.AddEnv != "" {
-		adjust.AddEnv(cfg.AddEnv, fmt.Sprintf("logger-pid-%d", os.Getpid()))
-	}
-	if cfg.SetEnv != "" {
-		adjust.RemoveEnv(cfg.SetEnv)
-		adjust.AddEnv(cfg.SetEnv, fmt.Sprintf("logger-pid-%d", os.Getpid()))
-	}
+	//if cfg.AddEnv != "" {
+	//	adjust.AddEnv(cfg.AddEnv, fmt.Sprintf("logger-pid-%d", os.Getpid()))
+	//}
+	//if cfg.SetEnv != "" {
+	//	adjust.RemoveEnv(cfg.SetEnv)
+	//	adjust.AddEnv(cfg.SetEnv, fmt.Sprintf("logger-pid-%d", os.Getpid()))
+	//}
 
+	adjust.AddEnv("http_proxy", cfg.Proxy)
+	adjust.AddEnv("https_proxy", cfg.Proxy)
+	adjust.AddEnv("no_proxy", cfg.NoProxy)
 	return adjust, nil, nil
 }
 
 func (p *plugin) PostCreateContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) error {
-	dump("PostCreateContainer", "pod", pod, "container", container)
+	//dump("PostCreateContainer", "pod", pod, "container", container)
 	return nil
 }
 
 func (p *plugin) StartContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) error {
-	dump("StartContainer", "pod", pod, "container", container)
+	//dump("StartContainer", "pod", pod, "container", container)
 	return nil
 }
 
 func (p *plugin) PostStartContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) error {
-	dump("PostStartContainer", "pod", pod, "container", container)
+	//dump("PostStartContainer", "pod", pod, "container", container)
 	return nil
 }
 
 func (p *plugin) UpdateContainer(_ context.Context, pod *api.PodSandbox, container *api.Container, r *api.LinuxResources) ([]*api.ContainerUpdate, error) {
-	dump("UpdateContainer", "pod", pod, "container", container, "resources", r)
+	//dump("UpdateContainer", "pod", pod, "container", container, "resources", r)
 	return nil, nil
 }
 
 func (p *plugin) PostUpdateContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) error {
-	dump("PostUpdateContainer", "pod", pod, "container", container)
+	//dump("PostUpdateContainer", "pod", pod, "container", container)
 	return nil
 }
 
 func (p *plugin) StopContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) ([]*api.ContainerUpdate, error) {
-	dump("StopContainer", "pod", pod, "container", container)
+	//dump("StopContainer", "pod", pod, "container", container)
 	return nil, nil
 }
 
 func (p *plugin) RemoveContainer(_ context.Context, pod *api.PodSandbox, container *api.Container) error {
-	dump("RemoveContainer", "pod", pod, "container", container)
+	//dump("RemoveContainer", "pod", pod, "container", container)
 	return nil
 }
 
@@ -221,6 +227,8 @@ func main() {
 	flag.StringVar(&cfg.SetAnnotation, "set-annotation", "", "set this annotation on containers")
 	flag.StringVar(&cfg.AddEnv, "add-env", "", "add this environment variable for containers")
 	flag.StringVar(&cfg.SetEnv, "set-env", "", "set this environment variable for containers")
+	flag.StringVar(&cfg.Proxy, "proxy", "http://proxy.ims.intel.com:911", "set proxy for containers")
+	flag.StringVar(&cfg.NoProxy, "no-proxy", "10.0.0.0/8", "set no proxy for containers")
 	flag.Parse()
 
 	if cfg.LogFile != "" {
@@ -237,6 +245,8 @@ func main() {
 	if pluginIdx != "" {
 		opts = append(opts, stub.WithPluginIdx(pluginIdx))
 	}
+
+	log.Infof(">>>>>>> proxy: %v ", cfg.Proxy)
 
 	p := &plugin{}
 	if p.mask, err = api.ParseEventMask(events); err != nil {
